@@ -1,0 +1,183 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const docs = await getCollection("docs");
+const withBase = (path: string) => path.replace(/^\/+/, "");
+const docHref = (id: string) => withBase(`docs/${id.replace(/\/index\.md$/, "").replace(/\.md$/, "")}`);
+
+const sectionOrder = [
+  "01-企业会计准则",
+  "02-企业会计准则解释",
+  "03-企业会计准则指南",
+  "08-每月更新",
+];
+
+const sectionMeta = {
+  "01-企业会计准则": {
+    title: "企业会计准则",
+    summary: "基础准则、具体准则与历史版本并列整理，适合按编号检索。",
+    href: withBase("docs/01-企业会计准则/"),
+    indexHref: withBase("docs/01-企业会计准则/index"),
+  },
+  "02-企业会计准则解释": {
+    title: "准则解释",
+    summary: "财政部历次解释文件，覆盖实务口径更新与衔接处理。",
+    href: withBase("docs/02-企业会计准则解释/"),
+    indexHref: withBase("docs/02-企业会计准则解释/index"),
+  },
+  "03-企业会计准则指南": {
+    title: "应用指南",
+    summary: "应用指南与延展说明，便于从条文走向具体会计处理。",
+    href: withBase("docs/03-企业会计准则指南/"),
+    indexHref: withBase("docs/03-企业会计准则指南/index"),
+  },
+  "08-每月更新": {
+    title: "每月更新",
+    summary: "最新准则发布、监管动态、专家解读与行业热点。",
+    href: withBase("docs/08-每月更新/"),
+    indexHref: withBase("docs/08-每月更新/index"),
+  },
+};
+
+const grouped = sectionOrder.map((section) => {
+  const sectionDocs = docs
+    .filter((doc) => doc.id.startsWith(`${section}/`) && !doc.id.endsWith("/index"))
+    .sort((a, b) => a.id.localeCompare(b.id, "zh-CN"));
+
+  return {
+    key: section,
+    ...sectionMeta[section],
+    count: sectionDocs.length,
+    docs: sectionDocs.slice(0, 6),
+  };
+});
+
+// 常用入口：链接到各section的index页面
+const entryPoints = sectionOrder.map((section) => ({
+  title: sectionMeta[section].title,
+  summary: sectionMeta[section].summary,
+  href: sectionMeta[section].indexHref,
+}));
+
+// 获取每月更新的最新文章（按日期排序）
+const monthlyUpdates = docs
+  .filter((doc) => doc.id.startsWith("08-每月更新/") && !doc.id.endsWith("/index"))
+  .sort((a, b) => {
+    const dateA = a.data.date ? new Date(a.data.date).getTime() : 0;
+    const dateB = b.data.date ? new Date(b.data.date).getTime() : 0;
+    return dateB - dateA;
+  })
+  .slice(0, 5);
+---
+
+<BaseLayout title="会计准则知识库">
+  <main class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Accounting Standards Library</p>
+        <h1>会计准则知识库</h1>
+        <p class="hero-text">
+          以结构化 Markdown 整理企业会计准则、准则解释与应用指南，强调全文可检索、来源可追溯、阅读体验克制。
+        </p>
+        <div class="hero-actions">
+          <a class="primary-link" href={withBase("docs/01-企业会计准则/")}>进入准则目录</a>
+          <a class="secondary-link" href={withBase("docs/02-企业会计准则解释/")}>查看解释体系</a>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="search-card">
+          <p class="panel-label">全文搜索</p>
+          <div id="pagefind-search"></div>
+        </div>
+        <div class="stats-grid">
+          {grouped.map((section) => (
+            <a class="stat-card" href={section.href}>
+              <span class="stat-value">{section.count}</span>
+              <span class="stat-label">{section.title}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="featured-block">
+      <div class="section-heading">
+        <p>常用入口</p>
+        <h2>快速导航至各板块</h2>
+      </div>
+      <div class="feature-list">
+        {entryPoints.map((entry) => (
+            <a class="feature-item" href={entry.href}>
+            <span class="feature-title">{entry.title}</span>
+            <span class="feature-path">{entry.summary}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {/* 每月更新最新文章 */}
+    {monthlyUpdates.length > 0 && (
+      <section class="featured-block" style="margin-top: 32px;">
+        <div class="section-heading">
+          <p>最新更新</p>
+          <h2>每月更新</h2>
+        </div>
+        <div class="feature-list">
+          {monthlyUpdates.map((doc) => (
+              <a class="feature-item" href={docHref(doc.id)}>
+              <span class="feature-title">{doc.data.title}</span>
+              <span class="feature-path">{doc.data.date ? new Date(doc.data.date).toLocaleDateString('zh-CN') : ''}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="section-grid">
+      {grouped.map((section) => (
+        <article class="section-card">
+          <div class="section-heading">
+            <p>{section.count} 篇文档</p>
+            <h2>{section.title}</h2>
+          </div>
+          <p class="section-summary">{section.summary}</p>
+          <ul class="doc-list">
+            {section.docs.map((doc) => (
+              <li>
+                <a href={docHref(doc.id)}>{doc.data.title}</a>
+              </li>
+            ))}
+          </ul>
+          <a class="section-link" href={section.href}>查看完整目录</a>
+        </article>
+      ))}
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      if (!window.PagefindUI) return;
+      new window.PagefindUI({
+        element: "#pagefind-search",
+        showSubResults: true,
+        showImages: false,
+        excerptLength: 18,
+        translations: {
+          placeholder: "搜索准则编号、关键词、条文",
+          clear_search: "清除",
+          load_more: "加载更多",
+          search_label: "搜索",
+          filters_label: "筛选",
+          zero_results: "未找到 [SEARCH_TERM]",
+          many_results: "[COUNT] 个结果",
+          one_result: "1 个结果",
+          alt_search: "未找到 [SEARCH_TERM]，显示 [DIFFERENT_TERM] 的结果",
+          search_suggestion: "请尝试搜索：",
+          searching: "正在搜索 [SEARCH_TERM]",
+        },
+      });
+    });
+  </script>
+</BaseLayout>

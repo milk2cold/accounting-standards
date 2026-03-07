@@ -1,0 +1,369 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+export interface Props {
+  doc: {
+    id: string;
+    data: Record<string, any>;
+  };
+}
+
+const { doc } = Astro.props;
+const withBase = (path: string) => path.replace(/^\/+/, "");
+const docHref = (id: string) => withBase(`docs/${id.replace(/\/index\.md$/, "").replace(/\.md$/, "")}`);
+const allDocs = await getCollection("docs");
+const section = doc.id.split("/")[0];
+const sectionDocs = allDocs
+  .filter((entry) => entry.id.startsWith(`${section}/`) && !entry.id.endsWith("/index"))
+  .sort((a, b) => a.id.localeCompare(b.id, "zh-CN"));
+
+const sectionIndex = allDocs.find((entry) => entry.id === `${section}/index.md`);
+const currentPath = docHref(doc.id);
+
+// 格式化日期为 YYYY-MM-DD
+const formatDate = (date: any) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// 一级分类导航
+const sectionOrder = [
+  "01-企业会计准则",
+  "02-企业会计准则解释",
+  "03-企业会计准则指南",
+  "08-每月更新",
+  "09-推荐资源",
+];
+
+const sectionMeta: Record<string, { title: string; href: string }> = {
+  "01-企业会计准则": {
+    title: "企业会计准则",
+    href: docHref("01-企业会计准则/index.md"),
+  },
+  "02-企业会计准则解释": {
+    title: "准则解释",
+    href: docHref("02-企业会计准则解释/index.md"),
+  },
+  "03-企业会计准则指南": {
+    title: "应用指南",
+    href: docHref("03-企业会计准则指南/index.md"),
+  },
+  "08-每月更新": {
+    title: "每月更新",
+    href: docHref("08-每月更新/index.md"),
+  },
+  "09-推荐资源": {
+    title: "推荐资源",
+    href: docHref("09-推荐资源/index.md"),
+  },
+};
+
+// 按编号分组文档（用于折叠导航）
+const groupDocsByNumber = (docs: typeof sectionDocs) => {
+  const groups: { label: string; docs: typeof sectionDocs }[] = [];
+  
+  docs.forEach((doc) => {
+    // 提取编号（如 "01-存货" 中的 01）
+    const match = doc.id.match(/(\d+)-/);
+    const num = match ? parseInt(match[1], 10) : 0;
+    
+    // 确定分组
+    let groupLabel = "";
+    if (num >= 1 && num <= 10) groupLabel = "第1-10号准则";
+    else if (num >= 11 && num <= 20) groupLabel = "第11-20号准则";
+    else if (num >= 21 && num <= 30) groupLabel = "第21-30号准则";
+    else if (num >= 31) groupLabel = "第31号以后";
+    else groupLabel = "其他";
+    
+    const existingGroup = groups.find((g) => g.label === groupLabel);
+    if (existingGroup) {
+      existingGroup.docs.push(doc);
+    } else {
+      groups.push({ label: groupLabel, docs: [doc] });
+    }
+  });
+  
+  return groups;
+};
+
+const docGroups = section === "01-企业会计准则" ? groupDocsByNumber(sectionDocs) : null;
+
+// 获取相关文档（对应准则的解释和应用指南）
+// 获取当前准则的编号
+const currentNumber = doc.data.number ?? doc.rendered?.metadata?.frontmatter?.number;
+
+// 查找对应的解释和应用指南
+const getRelatedGuides = () => {
+  if (!currentNumber || currentNumber < 1) return [];
+  
+  const guides: { title: string; href: string; type: string }[] = [];
+  
+  // 查找准则解释（如 "14-准则解释第14号"）
+  const explanations = allDocs.filter(entry => 
+    entry.id.startsWith("02-企业会计准则解释/") && 
+    entry.id.includes(`-${currentNumber}号`)
+  );
+  
+  // 查找应用指南（如 "22-金融工具确认和计量应用指南"）
+  const applicationGuides = allDocs.filter(entry => 
+    entry.id.startsWith("03-企业会计准则指南/") && 
+    (entry.id.includes(`-${currentNumber}-`) || entry.id.includes(`/${currentNumber}-`))
+  );
+  
+  explanations.forEach(doc => {
+    guides.push({
+      title: doc.data.short_title || doc.data.title,
+      href: docHref(doc.id),
+      type: '解释'
+    });
+  });
+  
+  applicationGuides.forEach(doc => {
+    guides.push({
+      title: doc.data.short_title || doc.data.title,
+      href: docHref(doc.id),
+      type: '指南'
+    });
+  });
+  
+  return guides;
+};
+
+const relatedGuides = section === "01-企业会计准则" ? getRelatedGuides() : [];
+
+// ============================================
+// 准则引用提取逻辑
+// ============================================
+
+// 提取正文中的准则引用
+const extractStandardReferences = () => {
+  if (!doc.body) {
+    return [];
+  }
+  
+  // 使用正则表达式匹配《企业会计准则...》
+  const referenceRegex = /《企业会计准则([^》]+)》/g;
+  
+  const references: Map<string, { number: number; title: string; href: string }> = new Map();
+  let match;
+  
+  while ((match = referenceRegex.exec(doc.body)) !== null) {
+    // 提取准则号
+    const numberMatch = match[1].match(/第(\d+)号/);
+    const number = numberMatch ? parseInt(numberMatch[1], 10) : 0;
+    
+    if (number < 0 || number > 99) continue;
+    
+    // 查找对应文档 - number 可能在 data 或 rendered.metadata.frontmatter 中
+    const targetDocs = allDocs
+      .filter(entry => {
+        const entryNumber = entry.data.number ?? entry.rendered?.metadata?.frontmatter?.number;
+        return (
+          entry.id.startsWith("01-企业会计准则/") && 
+          entryNumber === number &&
+          entry.id !== doc.id
+        );
+      });
+    
+    if (targetDocs.length === 0) continue;
+    
+    const targetDoc = targetDocs.find(d => 
+      d.data.status === "现行有效" || d.rendered?.metadata?.frontmatter?.status === "现行有效"
+    ) || targetDocs[0];
+    
+    if (references.has(targetDoc.id)) continue;
+    
+    references.set(targetDoc.id, {
+      number,
+      title: targetDoc.data.short_title || targetDoc.data.title || `第${number}号准则`,
+      href: docHref(targetDoc.id)
+    });
+  }
+  
+  return Array.from(references.values()).sort((a, b) => a.number - b.number);
+};
+
+const standardReferences = section === "01-企业会计准则" ? extractStandardReferences() : [];
+---
+
+<BaseLayout title={doc.data.title}>
+  <main class="page-shell">
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+      <a class="home-link" href="">首页</a>
+      <div class="section-nav">
+        {sectionOrder.map((key) => {
+          const meta = sectionMeta[key];
+          if (!meta) return null;
+          const isCurrent = key === section;
+          return (
+            <a 
+              href={meta.href} 
+              class:list={["section-nav-link", { current: isCurrent }]}
+            >
+              {meta.title}
+            </a>
+          );
+        })}
+      </div>
+    </nav>
+
+    <div class="doc-layout">
+      <!-- 左侧边栏 -->
+      <aside class="doc-aside">
+        <p class="panel-label">文档导航</p>
+        <h2 style="font-size:1.4rem; margin-bottom: 14px;">{sectionIndex?.data.title ?? section}</h2>
+
+        <dl class="doc-meta">
+          {doc.data.status && (
+            <div class="meta-row">
+              <dt>状态</dt>
+              <dd><span class="status-tag">{doc.data.status}</span></dd>
+            </div>
+          )}
+          <div class="meta-row">
+            <dt>类别</dt>
+            <dd>{doc.data.category ?? "文档"}</dd>
+          </div>
+          {doc.data.date && (
+            <div class="meta-row">
+              <dt>日期</dt>
+              <dd>{formatDate(doc.data.date)}</dd>
+            </div>
+          )}
+          {doc.data.origin_url && (
+            <div class="meta-row">
+              <dt>来源</dt>
+              <dd>
+            <a href={doc.data.origin_url} target="_blank" rel="noreferrer">财政部会计司</a>
+              </dd>
+            </div>
+          )}
+        </dl>
+
+        {doc.data.tags && doc.data.tags.length > 0 && (
+          <div class="doc-tags">
+            {doc.data.tags.map((tag: string) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )}
+
+        {sectionIndex && (
+          <p style="margin-bottom: 12px;">
+            <a class="secondary-link" href={docHref(sectionIndex.id)}>返回本目录</a>
+          </p>
+        )}
+
+        <nav class="aside-nav" id="aside-nav">
+          {docGroups ? (
+            // 企业会计准则：使用分组折叠导航
+            docGroups.map((group) => (
+              <div class="nav-group">
+                <button class="nav-group-toggle" data-group={group.label}>
+                  <span>{group.label}</span>
+                  <span class="toggle-icon">▼</span>
+                </button>
+                <div class="nav-group-content" id={`group-${group.label}`}>
+                  {group.docs.map((entry) => {
+                    const href = docHref(entry.id);
+                    const current = href === currentPath;
+                    return (
+                      <a href={href} class:list={{ current }}>
+                        {entry.data.short_title ?? entry.data.title}
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            // 其他section：使用普通滚动导航
+            sectionDocs.map((entry) => {
+              const href = docHref(entry.id);
+              const current = href === currentPath;
+              return (
+                <a href={href} class:list={{ current }}>
+                  {entry.data.short_title ?? entry.data.title}
+                </a>
+              );
+            })
+          )}
+        </nav>
+      </aside>
+
+      <!-- 中间文章区域 -->
+      <article class="doc-shell">
+        <div class="doc-kicker">
+          <span>{doc.data.category ?? "文档"}</span>
+          {doc.data.number !== undefined && <span>No. {doc.data.number}</span>}
+          {doc.data.status && <span>{doc.data.status}</span>}
+        </div>
+
+        <h1 class="doc-title">{doc.data.title}</h1>
+
+        {doc.data.summary && (
+          <p style="color: var(--ink-soft); font-size: 1rem; margin-bottom: 24px;">
+            {doc.data.summary}
+          </p>
+        )}
+
+        <div class="prose">
+          <slot />
+        </div>
+      </article>
+
+      <!-- 右侧相关文档导航 -->
+      <aside class="toc-aside" id="toc-aside">
+        {standardReferences.length > 0 && (
+          <>
+            <p class="panel-label">准则引用</p>
+            <nav class="toc-nav" id="toc-nav">
+              {standardReferences.map((ref) => (
+                <a href={ref.href} class="toc-link">
+                  {ref.title}
+                </a>
+              ))}
+            </nav>
+          </>
+        )}
+        {relatedGuides.length > 0 && (
+          <>
+            <p class="panel-label" style={standardReferences.length > 0 ? "margin-top: 24px;" : ""}>解释与应用指南</p>
+            <nav class="toc-nav" id="toc-nav">
+              {relatedGuides.map((guide) => (
+                <a href={guide.href} class="toc-link">
+                  {guide.title}
+                </a>
+              ))}
+            </nav>
+          </>
+        )}
+      </aside>
+    </div>
+  </main>
+
+  <script is:inline>
+    // 折叠导航功能
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggles = document.querySelectorAll('.nav-group-toggle');
+      toggles.forEach((toggle) => {
+        toggle.addEventListener('click', function() {
+          const groupLabel = this.getAttribute('data-group');
+          const content = document.getElementById('group-' + groupLabel);
+          const icon = this.querySelector('.toggle-icon');
+          if (content) {
+            const isExpanded = content.style.display !== 'none';
+            content.style.display = isExpanded ? 'none' : 'block';
+            icon.textContent = isExpanded ? '▶' : '▼';
+          }
+        });
+      });
+    });
+  </script>
+</BaseLayout>

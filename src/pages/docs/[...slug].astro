@@ -1,0 +1,29 @@
+---
+import { getCollection, render } from 'astro:content';
+import DocLayout from '../../layouts/DocLayout.astro';
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs');
+  return docs.map(doc => ({
+    params: {
+      slug: doc.id.replace(/\/index\.md$/, "").replace(/\.md$/, ""),
+    },
+    props: { doc },
+  }));
+}
+
+const { doc } = Astro.props;
+const { Content } = await render(doc);
+
+// 将文档的 body 传递给 layout 用于提取准则引用
+const docWithBody = {
+  ...doc,
+  body: doc.body || ''
+};
+---
+
+<DocLayout doc={docWithBody}>
+  <div class="prose">
+    <Content />
+  </div>
+</DocLayout>

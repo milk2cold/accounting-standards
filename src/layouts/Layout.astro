@@ -1,0 +1,66 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="会计准则知识库 - 权威、易用、免费的企业会计准则查询平台" />
+  <title>{title} - 会计准则知识库</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style is:global>
+    @import "tailwindcss";
+    
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --accent: #0047ab;
+      --border: #e2e8f0;
+      --highlight: #fef3c7;
+    }
+    
+    [data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent: #3b82f6;
+      --border: #334155;
+      --highlight: #451a03;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", "思源黑体", sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.8;
+    }
+    
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    .search-highlight {
+      background-color: var(--highlight);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <slot />
+</body>
+</html>
