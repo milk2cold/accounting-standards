@@ -1,0 +1,119 @@
+// 企业会计准则文章批量抓取脚本
+const { chromium } = require('playwright');
+
+const articles = [
+  { title: "企业会计准则——基本准则", url: "http://tfs.mof.gov.cn/caizhengbuling/201407/t20140729_1119494.htm", date: "2014-07-29" },
+  { title: "企业会计准则第1号——存货", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46216.htm", date: "2006-02-27" },
+  { title: "企业会计准则第2号——长期股权投资", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46215.htm", date: "2014-03-27" },
+  { title: "企业会计准则第3号——投资性房地产", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46214.htm", date: "2006-02-27" },
+  { title: "企业会计准则第4号——固定资产", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46213.htm", date: "2006-02-27" },
+  { title: "企业会计准则第5号——生物资产", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46212.htm", date: "2006-02-27" },
+  { title: "企业会计准则第6号——无形资产", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46242.htm", date: "2006-03-09" },
+  { title: "企业会计准则第7号——非货币性资产交换", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201909/t20190911_3384679.htm", date: "2019-09-11" },
+  { title: "企业会计准则第8号——资产减值", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46240.htm", date: "2006-03-09" },
+  { title: "企业会计准则第9号——职工薪酬", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46239.htm", date: "2014-02-17" },
+  { title: "企业会计准则第10号——企业年金基金", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46238.htm", date: "2006-03-09" },
+  { title: "企业会计准则第11号——股份支付", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46237.htm", date: "2006-03-09" },
+  { title: "企业会计准则第12号——债务重组", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201910/t20191028_3410789.htm", date: "2019-10-28" },
+  { title: "企业会计准则第13号——或有事项", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46235.htm", date: "2006-03-09" },
+  { title: "企业会计准则第14号——收入", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201709/t20170907_2694006.htm", date: "2017-09-07" },
+  { title: "企业会计准则第16号——政府补助", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46232.htm", date: "2017-05-25" },
+  { title: "企业会计准则第17号——借款费用", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46231.htm", date: "2006-03-09" },
+  { title: "企业会计准则第18号——所得税", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46230.htm", date: "2006-03-09" },
+  { title: "企业会计准则第19号——外币折算", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46229.htm", date: "2006-03-09" },
+  { title: "企业会计准则第20号——企业合并", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46228.htm", date: "2006-03-09" },
+  { title: "企业会计准则第21号——租赁", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201910/t20191028_3411190.htm", date: "2019-10-28" },
+  { title: "企业会计准则第22号——金融工具确认和计量（财会〔2017〕7号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201709/t20170908_2694655.htm", date: "2017-09-08" },
+  { title: "企业会计准则第22号——金融工具确认和计量（财会〔2006〕3号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46226.htm", date: "2006-03-09" },
+  { title: "企业会计准则第23号——金融资产转移（财会〔2017〕8号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201709/t20170908_2694626.htm", date: "2017-09-08" },
+  { title: "企业会计准则第23号——金融资产转移（财会〔2006〕3号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46225.htm", date: "2006-03-09" },
+  { title: "企业会计准则第24号——套期会计（财会〔2017〕9号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201709/t20170908_2694624.htm", date: "2017-09-08" },
+  { title: "企业会计准则第24号——套期保值（财会〔2006〕3号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46224.htm", date: "2006-03-09" },
+  { title: "企业会计准则第25号——保险合同（财会〔2020〕20号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/202202/t20220224_3790240.htm", date: "2022-02-24" },
+  { title: "企业会计准则第25号——原保险合同（财会〔2006〕3号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46223.htm", date: "2006-03-09" },
+  { title: "企业会计准则第26号——再保险合同（财会〔2006〕3号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46222.htm", date: "2006-03-09" },
+  { title: "企业会计准则第27号——石油天然气开采", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46221.htm", date: "2006-03-09" },
+  { title: "企业会计准则第28号——会计政策、会计估计变更和差错更正", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46220.htm", date: "2006-03-09" },
+  { title: "企业会计准则第29号——资产负债表日后事项", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46219.htm", date: "2006-03-09" },
+  { title: "企业会计准则第30号——财务报表列报", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46218.htm", date: "2014-02-17" },
+  { title: "企业会计准则第31号——现金流量表", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46250.htm", date: "2006-03-09" },
+  { title: "企业会计准则第32号——中期财务报告", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46249.htm", date: "2006-03-09" },
+  { title: "企业会计准则第33号——合并财务报表", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46248.htm", date: "2014-03-03" },
+  { title: "企业会计准则第34号——每股收益", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46247.htm", date: "2006-03-09" },
+  { title: "企业会计准则第35号——分部报告", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46246.htm", date: "2006-03-09" },
+  { title: "企业会计准则第36号——关联方披露", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46245.htm", date: "2006-03-09" },
+  { title: "企业会计准则第37号——金融工具列报（财会〔2017〕14号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201709/t20170907_2694118.htm", date: "2017-09-07" },
+  { title: "企业会计准则第37号——金融工具列报（财会〔2014〕23号）", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46244.htm", date: "2014-07-11" },
+  { title: "企业会计准则第38号——首次执行企业会计准则", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/200806/t20080618_46243.htm", date: "2006-03-09" },
+  { title: "企业会计准则第39号——公允价值计量", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201512/t20151208_1602631.htm", date: "2015-12-08" },
+  { title: "企业会计准则第40号——合营安排", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201512/t20151208_1602633.htm", date: "2015-12-08" },
+  { title: "企业会计准则第41号——在其他主体中权益的披露", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201512/t20151208_1602637.htm", date: "2015-12-08" },
+  { title: "企业会计准则第42号——持有待售的非流动资产、处置组和终止经营", url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/201709/t20170907_2694145.htm", date: "2017-09-07" }
+];
+
+async function fetchArticleContent(url) {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  
+  try {
+    await page.goto(url, { timeout: 30000 });
+    await page.waitForLoadState('networkidle');
+    
+    const content = await page.evaluate(() => {
+      const paragraphs = document.querySelectorAll('p');
+      const texts = [];
+      paragraphs.forEach(p => {
+        const text = p.innerText?.trim();
+        if (text && text.length > 5) {
+          texts.push(text);
+        }
+      });
+      return texts.join('\n\n');
+    });
+    
+    return content;
+  } catch (e) {
+    return `Error: ${e.message}`;
+  } finally {
+    await browser.close();
+  }
+}
+
+async function main() {
+  const fs = require('fs');
+  const results = [];
+  
+  console.log(`Fetching ${articles.length} articles...`);
+  
+  for (let i = 0; i < articles.length; i++) {
+    const article = articles[i];
+    console.log(`[${i+1}/${articles.length}] Fetching: ${article.title}`);
+    
+    try {
+      const content = await fetchArticleContent(article.url);
+      results.push({
+        ...article,
+        content: content
+      });
+    } catch (e) {
+      console.error(`Error fetching ${article.title}: ${e.message}`);
+      results.push({
+        ...article,
+        content: `Error: ${e.message}`
+      });
+    }
+    
+    // Save intermediate results
+    const output = {
+      source: "财政部会计司 - 企业会计准则",
+      url: "https://kjs.mof.gov.cn/zt/kjzzss/kuaijizhunzeshishi/",
+      total_count: results.length,
+      articles: results
+    };
+    fs.writeFileSync('企业会计准则_全文.json', JSON.stringify(output, null, 2), 'utf8');
+  }
+  
+  console.log('Done!');
+}
+
+main();

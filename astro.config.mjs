@@ -1,6 +1,5 @@
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
-import markdownTransform from "./src/integrations/markdown-transform";
 
 const repository = process.env.GITHUB_REPOSITORY ?? "";
 const [owner = "", repo = ""] = repository.split("/");
@@ -19,7 +18,10 @@ const site =
 export default defineConfig({
   site,
   base,
-  integrations: [markdownTransform()],
+  markdown: {
+    // Astro 7 默认使用 Sätteri 处理器，内置 heading ID 生成
+    syntaxHighlight: "shiki",
+  },
   vite: {
     plugins: [tailwindcss()],
   },
