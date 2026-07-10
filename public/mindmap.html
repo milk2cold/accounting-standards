@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>财会文摘精编系列 · 思维导图与检索</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#d1d5db; --v1:#2563eb; --v2:#059669; --v3:#d97706; --v4:#7c3aed;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased}
+  header{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;
+    padding:22px 28px;position:sticky;top:0;z-index:20;box-shadow:var(--shadow)}
+  header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.5px}
+  header p{margin:4px 0 0;font-size:13px;opacity:.85}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .search{flex:1;min-width:220px;position:relative}
+  .search input{width:100%;padding:9px 12px 9px 34px;border:none;border-radius:9px;
+    font-size:14px;background:rgba(255,255,255,.95);color:#111;outline:2px solid transparent}
+  .search input:focus{outline:2px solid #93c5fd}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:#9ca3af}
+  .pill{padding:7px 13px;border-radius:20px;border:none;background:rgba(255,255,255,.18);
+    color:#fff;font-size:13px;cursor:pointer;transition:.15s}
+  .pill:hover{background:rgba(255,255,255,.32)}
+  .pill.active{background:#fff;color:#1e3a8a;font-weight:600}
+  .count{font-size:12px;opacity:.8;margin-top:8px}
+  main{max-width:1180px;margin:0 auto;padding:26px 18px 60px}
+  .center{text-align:center;margin-bottom:6px}
+  .center .root{display:inline-block;background:#111827;color:#fff;padding:11px 22px;border-radius:12px;
+    font-size:16px;font-weight:700;box-shadow:var(--shadow)}
+  .trunk{width:2px;height:26px;background:var(--line);margin:0 auto}
+  .vols{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;align-items:start}
+  @media(max-width:880px){.vols{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.vols{grid-template-columns:1fr}}
+  .vol{background:var(--card);border-radius:14px;padding:14px 12px 16px;box-shadow:var(--shadow);
+    border-top:4px solid var(--c)}
+  .vol h2{margin:0 0 4px;font-size:15px;color:var(--c);font-weight:700}
+  .vol .vsub{font-size:11.5px;color:var(--muted);margin-bottom:10px;min-height:30px}
+  .stem{width:2px;height:14px;background:var(--c);margin:2px auto 6px;opacity:.5}
+  .node{display:block;text-decoration:none;color:var(--ink);background:#f9fafb;
+    border:1px solid #eceef1;border-left:3px solid var(--c);border-radius:8px;
+    padding:8px 10px;margin:7px 0;transition:.15s;cursor:pointer}
+  .node:hover{background:#fff;box-shadow:var(--shadow);transform:translateX(2px)}
+  .node .nt{font-size:13.5px;font-weight:600;color:#111827}
+  .node .nd{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.45}
+  .tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;
+    background:var(--c);color:#fff;opacity:.9;margin-bottom:4px}
+  .empty{color:var(--muted);font-size:12px;text-align:center;padding:14px 0}
+  mark{background:#fde68a;color:#7c2d12;padding:0 1px;border-radius:3px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:18px 0 4px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  footer{text-align:center;color:var(--muted);font-size:11.5px;padding:18px}
+  footer a{color:#2563eb;text-decoration:none}
+  .vol.collapsed .node,.vol.collapsed .stem{display:none}
+  .toggle{float:right;cursor:pointer;font-size:11px;color:var(--c);user-select:none;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>财会文摘精编系列 · 思维导图与检索</h1>
+  <p>4 辑 · 23 篇 · 从 2016–2018 年「一周文摘推荐」中提炼的可复用知识图谱</p>
+  <div class="controls">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+      <input id="q" type="text" placeholder="搜索文章标题或要点，例如：估值 / 造假 / 深度工作 / IPO …" />
+    </div>
+    <button class="pill active" data-f="all">全部</button>
+    <button class="pill" data-f="0">①准则税务</button>
+    <button class="pill" data-f="1">②财务分析</button>
+    <button class="pill" data-f="2">③投资估值</button>
+    <button class="pill" data-f="3">④职业发展</button>
+  </div>
+  <div class="count" id="count"></div>
+</header>
+
+<main>
+  <div class="center"><div class="root">财会文摘精编系列</div></div>
+  <div class="trunk"></div>
+  <div class="vols" id="vols"></div>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--v1)"></i>第一辑 会计准则与税务实务</span>
+    <span><i class="dot" style="background:var(--v2)"></i>第二辑 财务分析与报表解读</span>
+    <span><i class="dot" style="background:var(--v3)"></i>第三辑 投资分析与估值</span>
+    <span><i class="dot" style="background:var(--v4)"></i>第四辑 职业发展与个人成长</span>
+  </div>
+</main>
+
+<footer>
+  数据来源：<a href="https://milk2cold.github.io/accounting-standards/docs/10-财会文摘系列/" target="_blank" rel="noopener">财会文摘精编系列（在线阅读）</a>
+  · 点击任意节点跳转对应文章
+</footer>
+
+<script>
+const BASE = "https://milk2cold.github.io/accounting-standards/docs/10-财会文摘系列/";
+const VOLS = [
+  {c:"var(--v1)", sub:"借贷原理 · 增值税 · 商誉 · 凭证底稿 · 关联方 · 新审计报告 · 汇算清缴",
+   articles:[
+    {t:"借贷原理与复式记账",d:"理解会计中“借(debit)”与“贷(credit)”的本质：它们不是增减、好坏，而是价值从来源(credit)流向去向(debit)的双向记录语言。",f:"借贷原理与复式记账"},
+    {t:"增值税会计处理",d:"营改增后，财政部以财会〔2016〕22号《增值税会计处理规定》统一了增值税的科目设置与列报。讲清“应交税费—应交增值税”各专栏的逻辑。",f:"增值税会计处理"},
+    {t:"商誉减值",d:"商誉不在资产负债表中摊销，而需每年做减值测试，且减值不得转回。讲清减值测试逻辑、一步法简化趋势，以及商誉为何是利润表的隐性风险。",f:"商誉减值"},
+    {t:"会计凭证与审计底稿",d:"会计凭证是账务的起点，审计底稿是审计的轨迹。这两件最基础的事，最能见一个财务/审计人的专业功底。",f:"会计凭证与审计底稿"},
+    {t:"关联方认定",d:"关联方认定存在企业会计准则、沪深上市规则、港交所三套口径。准则重原则、上市规则重可操作、港交所重实质，实务中“实质重于形式”是关键。",f:"关联方认定"},
+    {t:"新审计报告准则与关键审计事项",d:"2016 年中注协发布新审计报告准则，核心是在审计报告中沟通“关键审计事项(KAM)”，让报告从“模板化”走向“个性化”，提升财报可读性。",f:"新审计报告准则与关键审计事项"},
+    {t:"汇算清缴与研发费加计扣除",d:"企业所得税年度申报（汇算清缴）每年 5 月 31 日前完成；研发费加计扣除是企业最常用、也最易出错的税收优惠之一。讲清要点与勾稽。",f:"汇算清缴与研发费加计扣除"},
+   ]},
+  {c:"var(--v2)", sub:"图表选择 · 造假识别 · IPO 审核 · 并购尽调 · 商业策略财务视角",
+   articles:[
+    {t:"财务分析图表的选择",d:"财务分析报告里，图表不是装饰。趋势、结构、对比、分布各有合适的图型；选错图型，结论就会被误导。",f:"财务分析图表的选择"},
+    {t:"财务造假识别",d:"从乐视、辉山、獐子岛、龙宝参茸等案例看财务造假的红旗信号，以及浑水式尽职调查如何揭开谎言。",f:"财务造假识别"},
+    {t:"IPO 财务审核要点",d:"企业上市是系统工程，财务问题往往直接关系功败垂成。梳理 IPO 财务审核的核心关注点与典型“折戟”原因。",f:"IPO财务审核要点"},
+    {t:"并购与 IPO 尽职调查的差异",d:"IPO 尽调重在履行披露义务、确保信息准确完整（“尽职”）；并购尽调重在针对买方关心的问题深入调查（“调查”）。",f:"并购与IPO尽职调查的差异"},
+    {t:"商业策略的财务视角",d:"财务不只是结果记录，更是策略的投影。从捆绑销售等案例出发，讲如何用毛利率、费用率、资产周转把商业策略“读”出来。",f:"商业策略的财务视角"},
+   ]},
+  {c:"var(--v3)", sub:"成长型估值 · 美股招股书 · 股东信 · FA · 盈利与收入增长",
+   articles:[
+    {t:"成长型公司的估值",d:"亏损的成长型企业并非不可估值。DCF 可把预测推到盈利拐点，相对估值（P/S、P/GMV）在无利润时提供锚点。关键在增长的质量与可持续性。",f:"成长型公司的估值"},
+    {t:"美股招股书解读",d:"美股 IPO 的 S-1 招股书是投资者研究公司的第一手材料。梳理其结构与最该精读的章节：风险因素、业务描述、管理层讨论、发行信息。",f:"美股招股书解读"},
+    {t:"股东信解读方法",d:"巴菲特与贝索斯的股东信是了解伟大企业思维的窗口。给出读信框架：看资本配置、风险观、长期主义与坦诚度，并比较二人风格差异。",f:"股东信解读方法"},
+    {t:"财务顾问 FA 的工作",d:"FA（财务顾问）已从关系导向转向提供全链条投资服务的专业职能，覆盖从项目搜寻到投后管理。讲清业务流程、并购类型与估值定性因素。",f:"财务顾问FA的工作"},
+    {t:"盈利与收入增长的关系",d:"收入增长不等于价值增长。辨析盈利与收入增长的关系，警惕降价换量、烧钱买收入等“伪增长”，关注增长的质量。",f:"盈利与收入增长的关系"},
+   ]},
+  {c:"var(--v4)", sub:"职业危机与机会 · 技术重塑 · 深度工作 · 读书 · 核心竞争力 · 财经经典",
+   articles:[
+    {t:"会计人的职业危机与机会",d:"当财务众包平台、共享中心与 AI 开始承接基础核算，会计人的“危”在哪、“机”又在哪？给出结构性判断与应对方向。",f:"会计人的职业危机与机会"},
+    {t:"技术如何重塑会计职业",d:"自动化、RPA、AI 与云正在重构会计的工作内容。梳理技术对会计职业的结构性影响，以及财会人该往哪些高价值地带迁移。",f:"技术如何重塑会计职业"},
+    {t:"深度工作方法论",d:"《深度工作》（卡尔·纽波特）提出：在无干扰状态下专注进行的职业活动，能让认知能力达到极限、创造新价值。提炼其方法，适合备考与知识型工作。",f:"深度工作方法论"},
+    {t:"读书与知识管理",d:"读了很多却记不住？问题常在方法。整合“如何记住读过的书”“深度阅读”与学习科学（组块、能力错觉、间隔复习）的要点。",f:"读书与知识管理"},
+    {t:"核心竞争力与自我修养",d:"在变动的职业环境里，真正的护城河是难以复制的核心竞争力，以及日拱一卒的自我修养。整合“你的核心竞争力是什么”与“提高修养”的要点。",f:"核心竞争力与自我修养"},
+    {t:"财经经典影视与书单",d:"用经典延展商业与财务直觉。基于财会文摘新年 PLUS 期与好书分享（《钓愚》），整理一份穿越周期仍值得读看的清单与读法。",f:"财经经典影视与书单"},
+   ]},
+];
+
+const volsEl = document.getElementById("vols");
+const qEl = document.getElementById("q");
+const countEl = document.getElementById("count");
+let filterVol = "all";
+
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function url(f){return BASE + f.replace(/\s+/g,"").toLowerCase() + "/";}
+function hl(text,q){
+  if(!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0) return esc(text);
+  return esc(text.slice(0,i)) + "<mark>" + esc(text.slice(i,i+q.length)) + "</mark>" + esc(text.slice(i+q.length));
+}
+
+function render(){
+  const q = qEl.value.trim();
+  volsEl.innerHTML = "";
+  let shown = 0;
+  VOLS.forEach((vol,vi)=>{
+    if(filterVol!=="all" && filterVol!==String(vi)) return;
+    const matched = vol.articles.filter(a=>
+      !q || (a.t+a.d).toLowerCase().includes(q.toLowerCase()));
+    shown += matched.length;
+    const cls = "vol" + (matched.length===0 ? " collapsed":"");
+    const nodes = matched.map(a=>`
+      <a class="node" href="${url(a.f)}" target="_blank" rel="noopener">
+        <div class="nt">${hl(a.t,q)}</div>
+        <div class="nd">${hl(a.d,q)}</div>
+      </a>`).join("");
+    const el = document.createElement("div");
+    el.className = cls;
+    el.style.setProperty("--c", vol.c);
+    el.innerHTML = `
+      <span class="toggle" data-v="${vi}">${matched.length===0?'显示':'收起'}</span>
+      <h2>第${["一","二","三","四"][vi]}辑</h2>
+      <div class="vsub">${vol.sub}</div>
+      <div class="stem"></div>
+      ${nodes || '<div class="empty">无匹配文章</div>'}`;
+    volsEl.appendChild(el);
+  });
+  countEl.textContent = q
+    ? `匹配到 ${shown} 篇文章` + (filterVol!=="all" ? `（第${["一","二","三","四"][+filterVol]}辑）`:"")
+    : `共 ${VOLS.reduce((s,v)=>s+v.articles.length,0)} 篇文章 · 点击节点阅读全文`;
+}
+
+// fix url(): avoid malformed concatenation in template
+qEl.addEventListener("input", render);
+document.querySelectorAll(".pill").forEach(p=>{
+  p.addEventListener("click",()=>{
+    document.querySelectorAll(".pill").forEach(x=>x.classList.remove("active"));
+    p.classList.add("active");
+    filterVol = p.dataset.f;
+    render();
+  });
+});
+volsEl.addEventListener("click",e=>{
+  const t = e.target.closest(".toggle");
+  if(!t) return;
+  const vi = +t.dataset.v;
+  const vol = volsEl.children[vi];
+  vol.classList.toggle("collapsed");
+  t.textContent = vol.classList.contains("collapsed") ? "显示" : "收起";
+});
+
+// override url to keep a single source of truth
+render();
+</script>
+</body>
+</html>

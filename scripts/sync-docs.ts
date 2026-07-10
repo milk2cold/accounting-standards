@@ -21,6 +21,7 @@ const syncedDirectories = [
   "03-企业会计准则指南",
   "08-每月更新",
   "09-推荐资源",
+  "10-财会文摘系列",
 ];
 
 const ignoredFiles = new Set([
