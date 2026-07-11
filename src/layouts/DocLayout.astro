@@ -10,8 +10,10 @@ export interface Props {
 }
 
 const { doc } = Astro.props;
+const SITE_ORIGIN = Astro.site?.origin ?? "https://milk2cold.github.io";
+const SITE_PATH = (Astro.site?.pathname ?? "/accounting-standards").replace(/\/$/, "");
 const withBase = (path: string) => path.replace(/^\/+/, "");
-const docHref = (id: string) => withBase(`docs/${id.replace(/\/index\.md$/, "").replace(/\.md$/, "")}`);
+const docHref = (id: string) => `${SITE_ORIGIN}${SITE_PATH}/docs/${withBase(id.replace(/\/index\.md$/, "").replace(/\.md$/, ""))}`;
 const allDocs = await getCollection("docs");
 const section = doc.id.split("/")[0];
 const sectionDocs = allDocs

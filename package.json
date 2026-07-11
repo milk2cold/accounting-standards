@@ -6,9 +6,10 @@
     "sync:docs": "bun run scripts/sync-docs.ts",
     "dev": "bun run sync:docs && astro dev",
     "start": "bun run sync:docs && astro dev",
-    "build": "bun run sync:docs && astro build",
+    "build": "bun run sync:docs && astro build && bun run rewrite-links",
     "preview": "astro preview",
     "astro": "astro",
+    "rewrite-links": "bun run scripts/rewrite-links.mjs",
     "postbuild": "pagefind --site dist"
   },
   "dependencies": {
